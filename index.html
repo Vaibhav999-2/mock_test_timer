@@ -3,39 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mock Test Timer</title>
+  <title>Mock Test Portal</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
-      padding: 0;
-      background: #f4f4f4;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #ffffff;
+    }
+
+    header {
+      background: #004080;
+      color: white;
+      padding: 20px;
+      text-align: center;
     }
 
     #upload-section {
-      padding: 20px;
-      text-align: center;
-      background: #222;
-      color: #fff;
+      display: flex;
+      justify-content: space-around;
+      padding: 30px;
     }
 
-    #pdf-frame {
-      width: 100%;
-      height: 90vh;
-      border: none;
-      display: none;
+    .upload-box {
+      border: 2px dashed #004080;
+      padding: 20px;
+      border-radius: 10px;
+      width: 40%;
+      text-align: center;
+      background-color: #f8f8f8;
+    }
+
+    input[type="file"] {
+      margin: 10px 0;
     }
 
     #timer {
       position: fixed;
       top: 10px;
       right: 20px;
-      background: #000;
-      color: #fff;
+      background: #004080;
+      color: white;
       padding: 10px 15px;
       border-radius: 5px;
       font-size: 18px;
       z-index: 1000;
+      display: none;
+    }
+
+    #viewer {
+      width: 100%;
+      height: 90vh;
+      display: none;
+      border: none;
+      background-color: #ffffff;
     }
 
     #overlay {
@@ -46,65 +66,100 @@
       height: 100%;
       background: black;
       z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: white;
+    }
+
+    #show-again-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #004080;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
+  <header>
+    <h1>Mock Test Portal</h1>
+  </header>
+
   <div id="upload-section">
-    <h2>Upload Your Mock PDF</h2>
-    <input type="file" id="pdf-upload" accept="application/pdf" />
+    <div class="upload-box">
+      <h2>Sectional Mock (40 min)</h2>
+      <input type="file" accept="application/pdf,image/*,.doc,.docx" onchange="handleUpload(event, 40)">
+    </div>
+    <div class="upload-box">
+      <h2>Full Mock (120 min)</h2>
+      <input type="file" accept="application/pdf,image/*,.doc,.docx" onchange="handleUpload(event, 120)">
+    </div>
   </div>
 
-  <div id="timer">40:00</div>
-  <div id="overlay"></div>
+  <div id="timer">00:00</div>
+  <div id="overlay">
+    <h1>Time's Up!</h1>
+    <button id="show-again-btn" onclick="restoreMock()">Show Mock Again</button>
+  </div>
+  <iframe id="viewer"></iframe>
 
-  <iframe id="pdf-frame"></iframe>
-
-  <!-- Alarm sound -->
-  <audio id="alarm-sound">
-    <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
-    Your browser does not support the audio element.
-  </audio>
+  <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
   <script>
-    const uploadInput = document.getElementById('pdf-upload');
-    const pdfFrame = document.getElementById('pdf-frame');
     const timerDisplay = document.getElementById('timer');
+    const viewer = document.getElementById('viewer');
     const overlay = document.getElementById('overlay');
-    const alarmSound = document.getElementById('alarm-sound');
+    const beep = document.getElementById('beep');
+    let countdown;
 
-    let countdownInterval;
+    function handleUpload(event, minutes) {
+      const file = event.target.files[0];
+      if (!file) return;
 
-    uploadInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file && file.type === 'application/pdf') {
-        const fileURL = URL.createObjectURL(file);
-        pdfFrame.src = fileURL;
-        pdfFrame.style.display = 'block';
-        startTimer(40 * 60); // 40 minutes
-      } else {
-        alert("Please upload a valid PDF file.");
-      }
-    });
+      const fileURL = URL.createObjectURL(file);
+      viewer.src = fileURL;
+      viewer.style.display = 'block';
+      document.getElementById('upload-section').style.display = 'none';
+      timerDisplay.style.display = 'block';
+      startTimer(minutes * 60);
+      speak("Your mock paper has been started");
+    }
 
     function startTimer(duration) {
       let timer = duration;
-      countdownInterval = setInterval(() => {
-        let minutes = Math.floor(timer / 60);
-        let seconds = timer % 60;
+      countdown = setInterval(() => {
+        const minutes = Math.floor(timer / 60);
+        const seconds = timer % 60;
         timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
+        if (timer === 300 || timer === 120) {
+          beep.play();
+        }
+
         if (--timer < 0) {
-          clearInterval(countdownInterval);
+          clearInterval(countdown);
           blackout();
         }
       }, 1000);
     }
 
     function blackout() {
-      overlay.style.display = 'block';
+      overlay.style.display = 'flex';
       timerDisplay.textContent = 'Time Up!';
-      alarmSound.play();
+    }
+
+    function restoreMock() {
+      overlay.style.display = 'none';
+    }
+
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(utterance);
     }
   </script>
 </body>
