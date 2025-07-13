@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mock Test Timer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+    }
+
+    #upload-section {
+      padding: 20px;
+      text-align: center;
+      background: #222;
+      color: #fff;
+    }
+
+    #pdf-frame {
+      width: 100%;
+      height: 90vh;
+      border: none;
+      display: none;
+    }
+
+    #timer {
+      position: fixed;
+      top: 10px;
+      right: 20px;
+      background: #000;
+      color: #fff;
+      padding: 10px 15px;
+      border-radius: 5px;
+      font-size: 18px;
+      z-index: 1000;
+    }
+
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+  <div id="upload-section">
+    <h2>Upload Your Mock PDF</h2>
+    <input type="file" id="pdf-upload" accept="application/pdf" />
+  </div>
+
+  <div id="timer">40:00</div>
+  <div id="overlay"></div>
+
+  <iframe id="pdf-frame"></iframe>
+
+  <!-- Alarm sound -->
+  <audio id="alarm-sound">
+    <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
+    Your browser does not support the audio element.
+  </audio>
+
+  <script>
+    const uploadInput = document.getElementById('pdf-upload');
+    const pdfFrame = document.getElementById('pdf-frame');
+    const timerDisplay = document.getElementById('timer');
+    const overlay = document.getElementById('overlay');
+    const alarmSound = document.getElementById('alarm-sound');
+
+    let countdownInterval;
+
+    uploadInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file && file.type === 'application/pdf') {
+        const fileURL = URL.createObjectURL(file);
+        pdfFrame.src = fileURL;
+        pdfFrame.style.display = 'block';
+        startTimer(40 * 60); // 40 minutes
+      } else {
+        alert("Please upload a valid PDF file.");
+      }
+    });
+
+    function startTimer(duration) {
+      let timer = duration;
+      countdownInterval = setInterval(() => {
+        let minutes = Math.floor(timer / 60);
+        let seconds = timer % 60;
+        timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+        if (--timer < 0) {
+          clearInterval(countdownInterval);
+          blackout();
+        }
+      }, 1000);
+    }
+
+    function blackout() {
+      overlay.style.display = 'block';
+      timerDisplay.textContent = 'Time Up!';
+      alarmSound.play();
+    }
+  </script>
+</body>
+</html>
